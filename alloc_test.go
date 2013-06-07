@@ -305,3 +305,26 @@ func TestFromToInterface4(t *testing.T) {
 		t.Fatal("index 1 is not 0x1122, is", arr[1])
 	}
 }
+
+func TestToString(t *testing.T) {
+	b := 0x31323334
+	m, e := Load(interface{}(&b))
+	if e != nil {
+		t.Fatal(e)
+	}
+	sI, e := m.ToInterface("")
+	s := sI.(string)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if s != "4321" {
+		t.Fatal("Need 4321 got", s)
+	}
+	s, e = m.ToString()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if s != "4321" {
+		t.Fatal("Need 4321 got", s)
+	}
+}

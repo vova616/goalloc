@@ -131,6 +131,12 @@ Switch:
 		header.Len = sSize
 		header.Data = uintptr(this.ptr)
 		return nv.Elem().Interface(), nil
+	case reflect.String:
+		var s string
+		header := (*reflect.StringHeader)(unsafe.Pointer(&s))
+		header.Len = this.size
+		header.Data = uintptr(this.ptr)
+		return s, nil
 	case reflect.Ptr:
 		v = v.Elem()
 		goto Switch
@@ -142,6 +148,18 @@ Switch:
 		}
 		return reflect.NewAt(v, this.ptr).Interface(), nil
 	}
+}
+
+func (this *MemBlock) ToString() (string, error) {
+	if this.freed {
+		return "", AlreadyFreed
+	}
+	var s string
+	header := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	header.Len = this.size
+	header.Data = uintptr(this.ptr)
+
+	return s, nil
 }
 
 func (this *MemBlock) ToInt() (*int, error) {
