@@ -30,6 +30,15 @@ func Alloc(size int) (*MemBlock, error) {
 	return &MemBlock{size, false, false, ptr}, nil
 }
 
+func AllocArray(typ interface{}, size int) (*MemBlock, error) {
+	finalSize := size * int(reflect.TypeOf(typ).Size())
+	ptr, err := alloc(finalSize)
+	if err != nil {
+		return nil, err
+	}
+	return &MemBlock{finalSize, false, false, ptr}, nil
+}
+
 func Load(data interface{}) (*MemBlock, error) {
 
 	val := reflect.ValueOf(data)

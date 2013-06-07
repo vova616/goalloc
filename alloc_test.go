@@ -14,7 +14,21 @@ func TestAlloc(t *testing.T) {
 		t.Fatal(e)
 	}
 	if b.Size() != 16 {
-		t.Fatal("Wrong size need 16 have", b.Size())
+		t.Fatal("Need size 16 have", b.Size())
+	}
+}
+
+func TestAllocArray(t *testing.T) {
+	b, e := AllocArray(int16(0), 8)
+	if e != nil {
+		t.Fatal(e)
+	}
+	arr, e := b.ToInt16Slice()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(arr) != 8 {
+		t.Fatal("Need size 8 have", len(arr))
 	}
 }
 
