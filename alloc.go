@@ -39,7 +39,7 @@ func AllocArray(typ interface{}, size int) (*MemBlock, error) {
 	return &MemBlock{ptr, finalSize, false, false}, nil
 }
 
-func Load(data interface{}) (*MemBlock, error) {
+func Load(data interface{}) (MemBlock, error) {
 
 	val := reflect.ValueOf(data)
 	prev := reflect.ValueOf(nil)
@@ -47,12 +47,12 @@ func Load(data interface{}) (*MemBlock, error) {
 Switch:
 	switch val.Kind() {
 	case reflect.Slice:
-		return &MemBlock{unsafe.Pointer(val.Pointer()), val.Cap(), false, true}, nil
+		return MemBlock{unsafe.Pointer(val.Pointer()), val.Cap(), false, true}, nil
 	case reflect.Array:
 		if prev.Kind() != reflect.Ptr {
-			return nil, NotAPointer
+			return MemBlock{}, NotAPointer
 		}
-		return &MemBlock{unsafe.Pointer(prev.Pointer()), val.Cap(), false, true}, nil
+		return MemBlock{unsafe.Pointer(prev.Pointer()), val.Cap(), false, true}, nil
 	case reflect.Ptr:
 		prev = val
 		val = val.Elem()
@@ -65,14 +65,14 @@ Switch:
 		} else {
 			header = (*reflect.StringHeader)(unsafe.Pointer(prev.Pointer()))
 		}
-		return &MemBlock{unsafe.Pointer(header.Data), header.Len, false, true}, nil
+		return MemBlock{unsafe.Pointer(header.Data), header.Len, false, true}, nil
 	case reflect.Chan, reflect.Map, reflect.Func, reflect.Interface:
-		return nil, UnsupportedValue
+		return MemBlock{}, UnsupportedValue
 	default:
 		if prev.Kind() != reflect.Ptr {
-			return nil, NotAPointer
+			return MemBlock{}, NotAPointer
 		}
-		return &MemBlock{unsafe.Pointer(prev.Pointer()), int(val.Type().Size()), false, true}, nil
+		return MemBlock{unsafe.Pointer(prev.Pointer()), int(val.Type().Size()), false, true}, nil
 	}
 }
 
