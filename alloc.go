@@ -16,10 +16,10 @@ var UnsupportedValue = errors.New("Unsupported value.")
 var intSize = int(reflect.TypeOf(int(0)).Size())
 
 type MemBlock struct {
+	ptr       unsafe.Pointer
 	size      int
 	freed     bool
 	gcmanaged bool
-	ptr       unsafe.Pointer
 }
 
 func Alloc(size int) (*MemBlock, error) {
@@ -27,7 +27,7 @@ func Alloc(size int) (*MemBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MemBlock{size, false, false, ptr}, nil
+	return &MemBlock{ptr, size, false, false}, nil
 }
 
 func AllocArray(typ interface{}, size int) (*MemBlock, error) {
@@ -36,7 +36,7 @@ func AllocArray(typ interface{}, size int) (*MemBlock, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MemBlock{finalSize, false, false, ptr}, nil
+	return &MemBlock{ptr, finalSize, false, false}, nil
 }
 
 func Load(data interface{}) (*MemBlock, error) {
@@ -47,12 +47,12 @@ func Load(data interface{}) (*MemBlock, error) {
 Switch:
 	switch val.Kind() {
 	case reflect.Slice:
-		return &MemBlock{val.Cap(), false, true, unsafe.Pointer(val.Pointer())}, nil
+		return &MemBlock{unsafe.Pointer(val.Pointer()), val.Cap(), false, true}, nil
 	case reflect.Array:
 		if prev.Kind() != reflect.Ptr {
 			return nil, NotAPointer
 		}
-		return &MemBlock{val.Cap(), false, true, unsafe.Pointer(prev.Pointer())}, nil
+		return &MemBlock{unsafe.Pointer(prev.Pointer()), val.Cap(), false, true}, nil
 	case reflect.Ptr:
 		prev = val
 		val = val.Elem()
@@ -65,14 +65,14 @@ Switch:
 		} else {
 			header = (*reflect.StringHeader)(unsafe.Pointer(prev.Pointer()))
 		}
-		return &MemBlock{header.Len, false, true, unsafe.Pointer(header.Data)}, nil
+		return &MemBlock{unsafe.Pointer(header.Data), header.Len, false, true}, nil
 	case reflect.Chan, reflect.Map, reflect.Func, reflect.Interface:
 		return nil, UnsupportedValue
 	default:
 		if prev.Kind() != reflect.Ptr {
 			return nil, NotAPointer
 		}
-		return &MemBlock{int(val.Type().Size()), false, true, unsafe.Pointer(prev.Pointer())}, nil
+		return &MemBlock{unsafe.Pointer(prev.Pointer()), int(val.Type().Size()), false, true}, nil
 	}
 }
 
